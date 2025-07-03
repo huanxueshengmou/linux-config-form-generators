@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>systemd Service Unit Generator</title>
+<link rel="stylesheet" href="./css/form-generator.css">
+</head>
+<body>
+<h1>systemd Service Unit Generator</h1>
+<form id="unitForm" onsubmit="generateUnit();return false;">
+  <label>描述 (Description)
+    <input type="text" id="desc" value="My Service" placeholder="Frp Client">
+  </label>
+
+  <label>工作目录 (WorkingDirectory)
+    <input type="text" id="workdir" placeholder="/opt/myapp">
+  </label>
+
+  <label>启动命令 (ExecStart)
+    <input type="text" id="execstart" placeholder="/opt/myapp/myapp -c config.ini">
+  </label>
+
+  <label>Type
+    <select id="type">
+      <option value="simple" selected>simple</option>
+      <option value="forking">forking</option>
+      <option value="notify">notify</option>
+      <option value="exec">exec</option>
+    </select>
+  </label>
+
+  <label>After
+    <input type="text" id="after" value="network-online.target">
+  </label>
+
+  <label>Restart
+    <select id="restart">
+      <option value="on-failure" selected>on-failure</option>
+      <option value="always">always</option>
+      <option value="no">no</option>
+      <option value="on-abnormal">on-abnormal</option>
+    </select>
+  </label>
+
+  <label>RestartSec (秒)
+    <input type="number" id="restartsec" value="5">
+  </label>
+
+  <label>StartLimitIntervalSec (秒)
+    <input type="number" id="sli" value="60">
+  </label>
+
+  <label>StartLimitBurst
+    <input type="number" id="slb" value="3">
+  </label>
+
+  <label>标准输出文件 (StandardOutput 日志路径，可留空)
+    <input type="text" id="stdout" placeholder="/var/log/myapp.log">
+  </label>
+
+  <label>标准错误文件 (StandardError 日志路径，可留空)
+    <input type="text" id="stderr" placeholder="/var/log/myapp.log">
+  </label>
+
+  <label>运行用户 (User，可留空)
+    <input type="text" id="user" placeholder="nobody">
+  </label>
+
+  <label>WantedBy
+    <input type="text" id="wantedby" value="multi-user.target">
+  </label>
+
+  <button id="create" type="submit">生成配置</button>
+  <button id="download" type="button" onclick="downloadUnit()">下载文件</button>
+</form>
+
+<pre id="result" hidden></pre>
+
+<footer>© 2025 systemd unit helper. 使用说明：填写表单 → 点击“生成配置” → 复制或“下载文件”，保存为 <code>.service</code> 文件，然后 <code>sudo mv</code> 到 <code>/etc/systemd/system/</code> 并 <code>sudo systemctl daemon-reload</code>。</footer>
+
+<script>
+function generateUnit(){
+  const g=id=>document.getElementById(id).value.trim();
+  const lines=[];
+  lines.push('[Unit]');
+  if(g('desc')) lines.push(`Description=${g('desc')}`);
+  if(g('after')) lines.push(`After=${g('after')}`);
+  lines.push('');
+  lines.push('[Service]');
+  lines.push(`Type=${g('type')}`);
+  if(g('workdir')) lines.push(`WorkingDirectory=${g('workdir')}`);
+  if(g('execstart')) lines.push(`ExecStart=${g('execstart')}`);
+  if(g('user')) lines.push(`User=${g('user')}`);
+  lines.push(`Restart=${g('restart')}`);
+  if(g('restartsec')) lines.push(`RestartSec=${g('restartsec')}`);
+  if(g('sli')) lines.push(`StartLimitIntervalSec=${g('sli')}`);
+  if(g('slb')) lines.push(`StartLimitBurst=${g('slb')}`);
+  if(g('stdout')) lines.push(`StandardOutput=append:${g('stdout')}`);
+  if(g('stderr')) lines.push(`StandardError=append:${g('stderr')}`);
+  lines.push('');
+  lines.push('[Install]');
+  if(g('wantedby')) lines.push(`WantedBy=${g('wantedby')}`);
+
+  const result=lines.join('\n');
+  const pre=document.getElementById('result');
+  pre.textContent=result;
+  pre.hidden=false;
+}
+
+function downloadUnit(){
+  const pre=document.getElementById('result');
+  if(pre.hidden){alert('请先生成配置');return;}
+  const blob=new Blob([pre.textContent],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='myservice.service';
+  document.body.appendChild(a);
+  a.click();
+  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
