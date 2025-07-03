@@ -1,4 +1,4 @@
-# form2conf
+# linux-config-form-generators
 
 > A collection of web-based generators for Linux configuration files, making complex setup just a form away.  
 > 一套基于网页的 Linux 配置文件生成器，让复杂配置只需表单填写即可完成。
